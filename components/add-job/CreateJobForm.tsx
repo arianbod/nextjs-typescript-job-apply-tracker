@@ -30,8 +30,31 @@ const CreateJobForm = () => {
 			mode: JobMode.FullTime,
 		},
 	});
+
+	const queryClient = useQueryClient();
+	const { toast } = useToast();
+	const router = useRouter();
+
+	const { mutate, isPending } = useMutation({
+		mutationFn: (values: CreateAndEditJobType) => {
+			return createJobAction(values);
+		},
+		onSuccess: (data) => {
+			if (!data) {
+				toast({ description: 'there was an error' });
+				return;
+			}
+			toast({ description: 'Job has been created' });
+			queryClient.invalidateQueries({ queryKey: ['jobs'] });
+			queryClient.invalidateQueries({ queryKey: ['stats'] });
+			queryClient.invalidateQueries({ queryKey: ['charts'] });
+			
+			router.push('/jobs');
+		},
+	});
 	const onSubmit = (values: CreateAndEditJobType) => {
-		console.log(values);
+		// console.log(values);
+		mutate(values);
 	};
 	return (
 		<Form {...form}>
@@ -72,8 +95,9 @@ const CreateJobForm = () => {
 
 					<Button
 						type='submit'
-						className='self-end capitalize'>
-						create job
+						className='self-end capitalize'
+						disabled={isPending}>
+						{isPending ? 'wait...' : 'create job'}
 					</Button>
 				</div>
 			</form>
